@@ -1,0 +1,52 @@
+.grid-box {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 30px;
+  height: 30px;
+  padding-left: 5px;
+  padding-top: 5px;
+  border: 1px solid #444;
+  text-transform: uppercase;
+  font-weight: bold;
+  position: relative;
+}
+
+.grid-box.filled {
+  background-color: #ddd;
+  color: #111;
+}
+
+.grid-box.filled.active {
+  background-color: #500;
+  color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+.grid-number {
+  position: absolute;
+  font-size: 0.6rem;
+  top: 1px;
+  left: 1px;
+  color: #111;
+}
+
+.grid-number.active {
+  color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+.index-row,
+.index-col {
+  background-color: #444;
+  color: #888;
+}
+
+.index-row {
+  margin-right: 3px;
+}
+
+.index-col {
+  margin-bottom: 3px;
+}
