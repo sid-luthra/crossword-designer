@@ -3,18 +3,15 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 30px;
-  height: 30px;
   padding-left: 5px;
   padding-top: 5px;
-  border: 1px solid #444;
   text-transform: uppercase;
   font-weight: bold;
   position: relative;
 }
 
 .grid-box.filled {
-  background-color: #ddd;
+  background-color: #fff;
   color: #111;
 }
 

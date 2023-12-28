@@ -1,14 +1,19 @@
 export type WordGrid = {
   wordPlacements: WordPlacement[];
-  unplaced?: string[];
+  unplaced?: Word[];
   letterPlacements?: LetterPlacement[];
   sizeX: number;
   sizeY: number;
   score?: number;
 };
 
+export type Word = {
+  clue: string;
+  answer: string;
+};
+
 export type WordPlacement = {
-  word: string;
+  word: Word;
   x: number;
   y: number;
   horizontal: boolean;
@@ -20,7 +25,6 @@ export type LetterPlacement = {
   x: number;
   y: number;
   number?: number;
-  words: string[];
 };
 
 export type ScoringFactors = {

@@ -1,84 +1,51 @@
-import "./App.css";
-import GridDisplay from "./features/grid-display/grid-display";
-import sampleWords from "./data/sample-words";
+import BackgroundDisplay from "./features/background/components/background-display";
+import TitleInput from "./features/title/components/title-input";
+import PuzzleDisplay from "./features/puzzle-container/components/puzzle-display";
+import PuzzleInput from "./features/puzzle-container/components/puzzle-input";
+import GenerateGridButton from "./features/grid-display/components/generate-grid-button";
+import { Provider } from "react-redux";
+import store from "./store/store";
+import ControlPanel from "./features/control-panel/components/control-panel";
+import ControlPanelButton from "./features/control-panel/components/control-panel-button";
 import { useState } from "react";
-import useGrid from "./hooks/use-grid";
+import GridDisplayInput from "./features/grid-display/components/grid-display-input";
+import PuzzleList from "./features/saved-puzzles/components/puzzle-list";
+import LayoutWrapper from "./features/layouts/components/layout-wrapper";
+import ClueListInput from "./features/clue-display/components/clue-list-input";
+import { Stack } from "react-bootstrap";
 
 function App() {
-  const [sizeX, setSizeX] = useState(25);
-  const [sizeY, setSizeY] = useState(25);
-  const [words, setWords] = useState<string[]>(sampleWords);
-  const [iterations, setIterations] = useState(25);
-
-  const { attempts, grid, generateGrid, loading } = useGrid();
+  const [showControls, setShowControls] = useState(false);
 
   return (
-    <div>
-      <div className="grid-container">
-        <GridDisplay grid={grid} />
+    <Provider store={store}>
+      <div className="100vh">
+        <BackgroundDisplay>
+          <ControlPanelButton onClick={() => setShowControls(true)} />
+          <PuzzleDisplay>
+            <LayoutWrapper />
+          </PuzzleDisplay>
+        </BackgroundDisplay>
+        <ControlPanel show={showControls} setShow={setShowControls}>
+          <PuzzleList />
+          <hr />
+          <PuzzleInput />
+          <hr />
+          <TitleInput />
+          <hr />
+          <GridDisplayInput />
+          <hr />
+          <ClueListInput />
+          <hr />
+          <Stack gap={2}>
+            <GenerateGridButton />
+            <GenerateGridButton iterations={2}>
+              Quick Generate
+            </GenerateGridButton>
+          </Stack>
+        </ControlPanel>
       </div>
-      <div className="control-container">
-        <div className="input-container">
-          <label htmlFor="sizeX">Size X</label>
-          <input
-            id="sizeX"
-            type="number"
-            value={sizeX}
-            onChange={(e) => setSizeX(Number(e.target.value))}
-          />
-        </div>
-        <div className="input-container">
-          <label htmlFor="sizeY">Size Y</label>
-          <input
-            id="sizeY"
-            type="number"
-            value={sizeY}
-            onChange={(e) => setSizeY(Number(e.target.value))}
-          />
-        </div>
-        <div className="input-container">
-          <label htmlFor="iterations">Iterations</label>
-          <input
-            id="iterations"
-            type="number"
-            value={iterations}
-            onChange={(e) => setIterations(Number(e.target.value))}
-          />
-        </div>
-        <label htmlFor="words">Word List</label>
-        <textarea
-          id="words"
-          className="input-text-area"
-          rows={20}
-          value={words.join("\n")}
-          onChange={(e) => setWords(e.target.value.split("\n"))}
-        />
-        <button
-          type="button"
-          onClick={() => {
-            generateGrid({ sizeX, sizeY, words, iterations });
-          }}
-          disabled={loading}
-        >
-          {loading ? "Loading..." : "Generate"}
-        </button>
-        <div>
-          <h2>Attempts: {attempts}</h2>
-          <h2>Score: {grid?.score}</h2>
-          <h2>Placed: {grid?.wordPlacements.length}</h2>
-          <h2>Unplaced: {grid?.unplaced?.length}</h2>
-        </div>
-        <div className="input-container">
-          <label htmlFor="sizeX">Size X</label>
-          <input
-            id="sizeX"
-            type="number"
-            value={sizeX}
-            onChange={(e) => setSizeX(Number(e.target.value))}
-          />
-        </div>
-      </div>
-    </div>
+    </Provider>
   );
 }
 

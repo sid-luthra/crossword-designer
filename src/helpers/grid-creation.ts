@@ -1,16 +1,17 @@
 import {
   LetterPlacement,
   ScoringFactors,
+  Word,
   WordGrid,
   WordPlacement,
 } from "../types/word-placement";
 
-export function shuffleWords(words: string[]): string[] {
+export function shuffleWords(words: Word[]): Word[] {
   return words.sort(() => Math.random() - 0.5);
 }
 
 interface CreateGridProps {
-  words: string[];
+  words: Word[];
   sizeX?: number;
   sizeY?: number;
   options?: {
@@ -40,14 +41,23 @@ export function createGrid({
 
   let remainingWords = shuffledWords.slice(1);
 
-  remainingWords.forEach((word) => {
-    const possiblePlacements = findPossiblePlacements(word, grid);
-    if (possiblePlacements.length > 0) {
-      const placement = getOptimalPlacement(possiblePlacements, grid);
-      grid.wordPlacements.push(placement);
-      remainingWords = remainingWords.filter((w) => w !== word);
+  const placeWords = () => {
+    remainingWords.forEach((word) => {
+      const possiblePlacements = findPossiblePlacements(word, grid);
+      if (possiblePlacements.length > 0) {
+        const placement = getOptimalPlacement(possiblePlacements, grid);
+        grid.wordPlacements.push(placement);
+        remainingWords = remainingWords.filter((w) => w !== word);
+      }
+    });
+  };
+
+  for (let i = 0; i < 3; i++) {
+    if (remainingWords.length === 0) {
+      break;
     }
-  });
+    placeWords();
+  }
 
   grid.unplaced = remainingWords;
   grid.letterPlacements = getGridLetterPlacements(grid.wordPlacements);
@@ -55,10 +65,10 @@ export function createGrid({
   return grid;
 }
 
-function findPossiblePlacements(word: string, grid: WordGrid) {
+function findPossiblePlacements(word: Word, grid: WordGrid) {
   const possiblePlacements: WordPlacement[] = [];
 
-  const letters = word.split("");
+  const letters = word.answer.split("");
   const gridLetters = getGridLetterPlacements(grid.wordPlacements);
 
   letters.forEach((letter, index) => {
@@ -265,13 +275,12 @@ export function getWordLetterPlacements(
 ): LetterPlacement[] {
   const letterPlacements: LetterPlacement[] = [];
   const { word, x, y, horizontal } = placement;
-  const letters = word.split("");
+  const letters = word.answer.split("");
   letters.forEach((letter, index) => {
     const letterPlacement: LetterPlacement = {
       letter,
       x: horizontal ? x + index : x,
       y: horizontal ? y : y + index,
-      words: [word],
     };
     letterPlacements.push(letterPlacement);
   });
@@ -307,7 +316,7 @@ function getOptimalPlacement(options: WordPlacement[], grid: WordGrid) {
   return optimalPlacement;
 }
 
-export function compareGrids(oldGrid: WordGrid, newGrid: WordGrid): WordGrid {
+function scoreGrid(grid: WordGrid) {
   const scoring: ScoringFactors = {
     wordCount: 100,
     squareness: 500,
@@ -319,35 +328,31 @@ export function compareGrids(oldGrid: WordGrid, newGrid: WordGrid): WordGrid {
     return total + value;
   }, 0);
 
-  const oldGridCount = oldGrid.wordPlacements.length;
-  const oldSquareness = getSquareness(oldGrid);
-  const oldIntersections = countIntersections(oldGrid);
-  const oldDensity = getGridDensity(oldGrid);
+  if (!grid.letterPlacements) {
+    return 0;
+  }
 
-  const newSquareness = getSquareness(newGrid);
-  const newGridCount = newGrid.wordPlacements.length;
-  const newIntersections = countIntersections(newGrid);
-  const newDensity = getGridDensity(newGrid);
+  const gridCount = grid.wordPlacements.length;
+  const squareness = getSquareness(grid);
+  const intersections = countIntersections(grid);
+  const density = getGridDensity(grid);
 
-  const oldScore =
+  const score =
     Math.round(
-      ((oldGridCount * scoring.wordCount +
-        oldSquareness * scoring.squareness +
-        oldIntersections * scoring.intersections +
-        oldDensity * scoring.density) /
+      ((gridCount * scoring.wordCount +
+        squareness * scoring.squareness +
+        intersections * scoring.intersections +
+        density * scoring.density) /
         totalScore) *
         100
     ) / 100;
 
-  const newScore =
-    Math.round(
-      ((newGridCount * scoring.wordCount +
-        newSquareness * scoring.squareness +
-        newIntersections * scoring.intersections +
-        newDensity * scoring.density) /
-        totalScore) *
-        100
-    ) / 100;
+  return score;
+}
+
+export function compareGrids(oldGrid: WordGrid, newGrid: WordGrid): WordGrid {
+  const newScore = scoreGrid(newGrid);
+  const oldScore = scoreGrid(oldGrid);
 
   if (newScore > oldScore) {
     return { ...newGrid, score: newScore };
@@ -409,7 +414,6 @@ function getUniqueLetterPositions(
           unique[index] = {
             ...match,
             number: current.number,
-            words: [...match.words, ...current.words],
           };
         }
       } else {
@@ -417,7 +421,6 @@ function getUniqueLetterPositions(
         if (index !== -1) {
           unique[index] = {
             ...match,
-            words: [...match.words, ...current.words],
           };
         }
       }
@@ -429,7 +432,8 @@ function getUniqueLetterPositions(
 }
 
 export function getGridNumbers(grid: WordGrid) {
-  const sortedGrid = grid.wordPlacements.sort((a, b) => {
+  const unsorted = [...grid.wordPlacements];
+  const sortedGrid = unsorted.sort((a, b) => {
     if (a.y === b.y) {
       return a.x - b.x;
     }

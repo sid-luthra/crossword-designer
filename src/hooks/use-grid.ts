@@ -1,29 +1,27 @@
-import { useState } from "react";
-import { WordGrid } from "../types/word-placement";
 import {
   compareGrids,
   createGrid,
   getGridNumbers,
 } from "../helpers/grid-creation";
+import {
+  selectGrid,
+  setLoading,
+  setGrid,
+  resetGrid,
+  incrementAttempts,
+} from "../store/grid-slice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 
 interface UseGridProps {
   sizeX: number;
   sizeY: number;
-  words: string[];
+  words: { clue: string; answer: string }[];
   iterations: number;
 }
 
-const initialGrid: WordGrid = {
-  wordPlacements: [],
-  sizeX: 0,
-  sizeY: 0,
-  score: 0,
-};
-
 export default function useGrid() {
-  const [grid, setGrid] = useState<WordGrid>(initialGrid);
-  const [loading, setLoading] = useState(false);
-  const [attempts, setAttempts] = useState(0);
+  const grid = useAppSelector(selectGrid);
+  const dispatch = useAppDispatch();
 
   async function generateGrid({
     sizeX,
@@ -31,29 +29,27 @@ export default function useGrid() {
     words,
     iterations,
   }: UseGridProps) {
-    setLoading(true);
-    setGrid(initialGrid);
-    setAttempts(0);
+    dispatch(setLoading(true));
+    dispatch(resetGrid());
+    let currentGrid = grid;
     for (let i = 0; i < iterations; i++) {
       await new Promise((resolve) => setTimeout(resolve, 10));
       const newGrid = createGrid({ sizeX, sizeY, words });
-      setGrid((prevGrid) => {
-        if (prevGrid && prevGrid !== initialGrid) {
-          return compareGrids(prevGrid, newGrid);
-        }
-        return newGrid;
-      });
-      setAttempts((currentAttempts) => currentAttempts + 1);
+
+      const betterGrid = compareGrids(currentGrid, newGrid);
+      currentGrid = betterGrid;
+      dispatch(setGrid(betterGrid));
+
+      dispatch(incrementAttempts());
     }
-    setLoading(false);
+    const numberedGrid = getGridNumbers(currentGrid);
+    dispatch(setGrid(numberedGrid));
+
+    dispatch(setLoading(false));
   }
 
-  const numberedGrid = getGridNumbers(grid);
-
   return {
-    grid: numberedGrid,
+    grid,
     generateGrid,
-    attempts,
-    loading,
   };
 }
